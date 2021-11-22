@@ -12,7 +12,7 @@
           <table class="table table-hover">
             <thead>
             <tr>
-              <th scope="col"> id </th>
+              <th scope="col"> id</th>
               <th scope="col">Title</th>
               <th scope="col">Page No</th>
               <th scope="col">Author</th>
@@ -22,7 +22,7 @@
             </thead>
             <tbody>
             <tr v-for="(book,index) in LIBRARY" :key="index">
-              <td > {{ book.id }} </td>
+              <td>{{ book.id }}</td>
               <td>{{ book.title }}</td>
               <td>{{ book.pageCount }}</td>
               <td>{{
@@ -37,8 +37,11 @@
                         class="btn btn-warning btn-sm"
                         v-b-modal.book-update-modal
                         @click="editBook(book)">
-                  Update</button>
-                <button type="button" class="btn btn-danger btn-sm" @click="DELETE_BOOK_FROM_API(book.id, index)" >Delete</button>
+                  Update
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" @click="DELETE_BOOK_FROM_API(book.id, index)">
+                  Delete
+                </button>
               </td>
             </tr>
             </tbody>
@@ -47,40 +50,51 @@
       </div>
     </div>
 
-  <b-modal ref="editBookModal"
-           id="book-update-modal"
-           title="Update"
-           hide-footer>
-    <b-form @submit="onSubmitUpdate" @reset="onResetUpdate" class="w-100">
-      <b-form-group id="form-title-edit-group"
-                    label="Title:"
-                    label-for="form-title-edit-input">
-        <b-form-input id="form-title-edit-input"
-                      type="text"
-                      v-model="editForm.title"
-                      required
-                      placeholder="Enter title">
-        </b-form-input>
-      </b-form-group>
-      <b-form-group id="form-author-edit-group"
-                    label="Author:"
-                    label-for="form-author-edit-input">
-        <b-form-input id="form-author-edit-input"
-                      type="text"
-                      v-model="editForm.author"
-                      required
-                      placeholder="Enter author">
-        </b-form-input>
-      </b-form-group>
-      <b-form-group id="form-read-edit-group">
-        <b-form-checkbox-group v-model="editForm.read" id="form-checks">
-          <b-form-checkbox value="true">Read?</b-form-checkbox>
-        </b-form-checkbox-group>
-      </b-form-group>
-      <b-button type="submit" variant="primary">Update</b-button>
-      <b-button type="reset" variant="danger">Cancel</b-button>
-    </b-form>
-  </b-modal>
+    <b-modal ref="editBookModal"
+             id="book-update-modal"
+             title="Update"
+             hide-footer>
+      <b-form @submit="onSubmitUpdate" @reset="onResetUpdate" class="w-100">
+        <b-form-group id="form-title-edit-group"
+                      label="Title:"
+                      label-for="form-title-edit-input">
+          <b-form-input id="form-title-edit-input"
+                        type="text"
+                        v-model="editForm.title"
+                        required
+                        placeholder="Enter title">
+          </b-form-input>
+        </b-form-group>
+        <b-form-group id="form-author-edit-group"
+                      v-for="(author,index) in editForm.authors" :key="index"
+                      label="Author:"
+                      label-for="form-author-edit-input">
+          <b-form-select
+              id="bookAuthor"
+              class="form-control"
+              v-model="author.id"
+              :options=options
+          >
+          </b-form-select>
+        </b-form-group>
+
+
+        <b-form-group id="form-genre-edit-group"
+                      label="Genre:"
+                      label-for="form-genre-edit-input">
+          <b-form-select
+              id="bookGenre"
+              class="form-control"
+              v-model="editForm.genre.id"
+              :options=optionsGenre
+          >
+          </b-form-select>
+        </b-form-group>
+
+        <b-button type="submit" variant="primary">Update</b-button>
+        <b-button type="reset" variant="danger">Cancel</b-button>
+      </b-form>
+    </b-modal>
   </div>
 </template>
 
@@ -96,19 +110,28 @@ export default {
   name: "v-library",
   computed: {
     ...mapGetters([
-      'LIBRARY'
+      'LIBRARY',
+      'GENRES',
+      'AUTHORS'
     ])
   },
   methods: {
     ...mapActions([
       'GET_LIBRARY_FROM_API',
-        'DELETE_BOOK_FROM_API'
+      'DELETE_BOOK_FROM_API',
+      'GET_GENRES_FROM_API',
+      'GET_AUTHORS_FROM_API',
+      'GET_LIBRARY_FROM_API',
+
     ]),
-    toAddBook(){
-      this.$router.push({name:'addBook'})
+    toAddBook() {
+      this.$router.push({name: 'addBook'})
     },
     editBook(book) {
-      this.editForm = book;
+      this.editForm.id = book.id;
+      this.editForm.authors = book.authors;
+      this.editForm.title = book.title;
+      this.editForm.genre = book.genre;
     },
     onSubmitUpdate(evt) {
       evt.preventDefault();
@@ -117,7 +140,7 @@ export default {
       if (this.editForm.read[0]) read = true;
       const payload = {
         title: this.editForm.title,
-        author: this.editForm.author,
+        authors: this.editForm.authors,
         read,
       };
       this.updateBook(payload, this.editForm.id);
@@ -143,14 +166,29 @@ export default {
       this.getBooks();
     },
     initForm() {
-      this.addBookForm.title = '';
-      this.addBookForm.author = '';
-      this.addBookForm.read = [];
       this.editForm.id = '';
       this.editForm.title = '';
-      this.editForm.author = '';
+      this.editForm.authors = [];
       this.editForm.read = [];
     },
+    getOptions() {
+      let arr = this.AUTHORS;
+      arr.forEach(el => {
+        let auth = el.surname + " " + el.name;
+        this.options.push({
+          text: auth,
+          value: el.id
+        });
+      });
+
+      let arrGenre = this.GENRES;
+      arrGenre.forEach(el => {
+        this.optionsGenre.push({
+          text: el.genreName,
+          value: el.id
+        })
+      });
+    }
   },
   mounted() {
     this.GET_LIBRARY_FROM_API()
@@ -158,17 +196,24 @@ export default {
           if (response.data) {
             console.log(response.data);
           }
-        })
+        });
+    this.GET_GENRES_FROM_API();
+    this.GET_AUTHORS_FROM_API();
+    console.log("mounted works");
+    this.getOptions();
   },
-  data(){
+  data() {
     return {
       message: '',
       showMessage: false,
       editForm: {
         id: '',
         title: '',
-        author: ''
-      }
+        authors: [],
+        genre: {}
+      },
+      options: [],
+      optionsGenre: []
     }
   }
 }

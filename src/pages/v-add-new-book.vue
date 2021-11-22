@@ -64,6 +64,7 @@ export default {
       }
 
       this.INSERT_BOOK_FROM_API(book)
+      this.GET_LIBRARY_FROM_API()
       this.$router.push({name:'Library'})
     }
   },
@@ -78,7 +79,6 @@ export default {
       }
     }
   },
-
   mounted() {
     this.GET_GENRES_FROM_API()
         .then((response) => {
@@ -88,7 +88,6 @@ export default {
         });
     this.GET_AUTHORS_FROM_API();
   }
-
 }
 </script>
 
