@@ -53,6 +53,16 @@ let store = new Vuex.Store({
                     return error;
                 });
         },
+        UPDATE_BOOK_FROM_API({commit}, book) {
+            axios.put('/api/library/', book)
+                .then(response => {
+                    commit(response)
+                    return response.data
+                })
+                .catch((error) => {
+                    return error;
+                });
+        },
         GET_GENRES_FROM_API({commit}) {
             return axios('/api/genre', {method: "GET"})
                 .then((genres) => {

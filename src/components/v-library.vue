@@ -65,8 +65,18 @@
                         placeholder="Enter title">
           </b-form-input>
         </b-form-group>
+        <b-form-group id="form-pages-edit-group"
+                      label="Pages:"
+                      label-for="form-pages-edit-input">
+          <b-form-input id="form-pages-edit-input"
+                        type="number"
+                        v-model="editForm.pageCount"
+                        required
+                        placeholder="Enter pages">
+          </b-form-input>
+        </b-form-group>
         <b-form-group id="form-author-edit-group"
-                      v-for="(author,index) in editForm.authors" :key="index"
+                      v-for="(author,index) in editForm.authorList" :key="index"
                       label="Author:"
                       label-for="form-author-edit-input">
           <b-form-select
@@ -100,7 +110,6 @@
 
 <script>
 import {mapGetters, mapActions} from 'vuex'
-import axios from 'axios';
 import Alert from './Alert.vue';
 
 export default {
@@ -122,6 +131,7 @@ export default {
       'GET_GENRES_FROM_API',
       'GET_AUTHORS_FROM_API',
       'GET_LIBRARY_FROM_API',
+      'UPDATE_BOOK_FROM_API'
 
     ]),
     toAddBook() {
@@ -129,50 +139,34 @@ export default {
     },
     editBook(book) {
       this.editForm.id = book.id;
-      this.editForm.authors = book.authors;
+      this.editForm.authorList = book.authors;
       this.editForm.title = book.title;
       this.editForm.genre = book.genre;
+      this.editForm.pageCount = book.pageCount;
     },
     onSubmitUpdate(evt) {
       evt.preventDefault();
       this.$refs.editBookModal.hide();
-      let read = false;
-      if (this.editForm.read[0]) read = true;
-      const payload = {
-        title: this.editForm.title,
-        authors: this.editForm.authors,
-        read,
-      };
-      this.updateBook(payload, this.editForm.id);
-    },
-    updateBook(payload, bookID) {
-      const path = `http://localhost:5000/books/${bookID}`;
-      axios.put(path, payload)
-          .then(() => {
-            this.getBooks();
-            this.message = 'Book updated!';
-            this.showMessage = true;
-          })
-          .catch((error) => {
-            // eslint-отключение следующей строки
-            console.error(error);
-            this.getBooks();
-          });
+      console.log(this.editForm.authorList);
+      this.UPDATE_BOOK_FROM_API(this.editForm);
+      this.refreshData()
     },
     onResetUpdate(evt) {
       evt.preventDefault();
       this.$refs.editBookModal.hide();
       this.initForm();
-      this.getBooks();
+      this.refreshData()
     },
     initForm() {
       this.editForm.id = '';
       this.editForm.title = '';
-      this.editForm.authors = [];
-      this.editForm.read = [];
+      this.editForm.authorList = [];
+      this.editForm.pageCount = '';
+      this.editForm.genre = {};
     },
     getOptions() {
       let arr = this.AUTHORS;
+      this.options = [];
       arr.forEach(el => {
         let auth = el.surname + " " + el.name;
         this.options.push({
@@ -180,7 +174,7 @@ export default {
           value: el.id
         });
       });
-
+      this.optionsGenre = [];
       let arrGenre = this.GENRES;
       arrGenre.forEach(el => {
         this.optionsGenre.push({
@@ -188,18 +182,19 @@ export default {
           value: el.id
         })
       });
+    },
+    refreshData() {
+      this.GET_LIBRARY_FROM_API();
+      this.GET_GENRES_FROM_API();
+      this.GET_AUTHORS_FROM_API();
+      this.getOptions();
     }
   },
+
   mounted() {
-    this.GET_LIBRARY_FROM_API()
-        .then((response) => {
-          if (response.data) {
-            console.log(response.data);
-          }
-        });
+    this.GET_LIBRARY_FROM_API();
     this.GET_GENRES_FROM_API();
     this.GET_AUTHORS_FROM_API();
-    console.log("mounted works");
     this.getOptions();
   },
   data() {
@@ -209,7 +204,8 @@ export default {
       editForm: {
         id: '',
         title: '',
-        authors: [],
+        pageCount: '',
+        authorList: [],
         genre: {}
       },
       options: [],
